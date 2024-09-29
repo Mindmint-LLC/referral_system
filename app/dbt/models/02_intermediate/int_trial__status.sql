@@ -1,7 +1,7 @@
 
 with subscription_item as (
     select *
-    from {{ source('stripe_mindmint', 'subscription_item') }} si
+    from {{ source('stripe_mastermind', 'subscription_item') }} si
     qualify row_number() over (partition by si.subscription_id order by si.created desc) = 1
 )
 
@@ -13,10 +13,10 @@ with subscription_item as (
         , analytics.fnEmail(cs.email) as email
         , {{ dbt_utils.generate_surrogate_key(['analytics.fnEmail(cs.email)', 'cast(sh.created as date)']) }} as uq_email_created
         , p.sub_category
-    from {{ source('stripe_mindmint', 'subscription_history') }} sh
+    from {{ source('stripe_mastermind', 'subscription_history') }} sh
         join subscription_item si
             on sh.id = si.subscription_id
-        LEFT JOIN {{ source('stripe_mindmint', 'customer') }} cs
+        LEFT JOIN {{ source('stripe_mastermind', 'customer') }} cs
             ON sh.customer_id = cs.id
         join analytics.dim_products p
             on si.plan_id = p.product
@@ -43,7 +43,7 @@ with subscription_item as (
     select sh.id_tracking_order
         , min(i.due_date) as first_paid
     from new_subscription sh
-        join {{ source('stripe_mindmint', 'invoice') }} i
+        join {{ source('stripe_mastermind', 'invoice') }} i
             on sh.subscription_id_mm = i.subscription_id
             and i.status = 'paid'
             and i.subtotal > 40
