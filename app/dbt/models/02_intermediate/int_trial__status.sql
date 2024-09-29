@@ -12,15 +12,20 @@ with subscription_item as (
         , coalesce(sh.cancel_at, sh.canceled_at, cast('9000-12-31' as timestamp)) as ref_date
         , analytics.fnEmail(cs.email) as email
         , {{ dbt_utils.generate_surrogate_key(['analytics.fnEmail(cs.email)', 'cast(sh.created as date)']) }} as uq_email_created
-        , p.sub_category
+        , coalesce(p.sub_category, '97 membership') as sub_category
     from {{ source('stripe_mastermind', 'subscription_history') }} sh
         join subscription_item si
             on sh.id = si.subscription_id
         LEFT JOIN {{ source('stripe_mastermind', 'customer') }} cs
             ON sh.customer_id = cs.id
-        join analytics.dim_products p
+        left join analytics.dim_products p
             on si.plan_id = p.product
             and p.mastermind_subscription_type = 'subscription'
+    where lower(sh.metadata) like '%referral%'
+        and (
+            p.product is not null
+            or '{{ env_var("RUN_MODE", "prod") }}' = 'test'
+        )
 )
 
 , new_subscription as (
