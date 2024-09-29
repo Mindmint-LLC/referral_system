@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: kbb_evergreen
+    description: KBB Evergreen tables synced from MySQL to Bigquery
+    database: bbg-platform
+    schema: "{{ env_var('DBT_DATASET_KBBEVERGREEN') }}"
+    tables:
+      - name: tracking_orders
+        description: Click Funnel Orders

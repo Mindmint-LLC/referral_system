@@ -1,0 +1,38 @@
+version: 2
+
+sources:
+  - name: stripe_mastermind
+    description: Mastermind.com Stripe Account
+    database: bbg-platform
+    schema: "{{ env_var('DBT_DATASET_STRIPE_MASTERMIND') }}"
+    tables:
+      - name: customer
+        description: Stripe Customers
+      - name: balance_transaction
+        description: List of all Stripe Transactions
+      - name: charge
+        description: List of all Stripe Charges
+      - name: refund
+        description: List of all Stripe Refunds
+      - name: dispute
+        description: List of all Stripe Disputes
+      - name: subscription_item
+        description: List of all Stripe Subscriptions
+      - name: invoice
+        description: List of all Stripe Invoices
+      - name: plan
+        description: List of all Stripe Plans
+      - name: product
+        description: List of all Stripe Products
+      - name: subscription_history
+        description: List of stripe subscription information to get cancel status
+      - name: subscription_discount
+        description: Bridge to coupon table
+      - name: coupon
+        description: Coupons available on subscriptions
+      - name: customer_discount
+        description: Coupons available on customers
+      - name: invoice_line_item
+        description: Coupons available on customers
+      - name: price
+        description: Coupons available on customers

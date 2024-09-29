@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: int_trial__status
+    columns:
+      - name: id_tracking_order
+        tests:
+          - unique
+          - not_null
