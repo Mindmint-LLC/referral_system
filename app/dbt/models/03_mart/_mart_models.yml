@@ -4,18 +4,18 @@ models:
   - name: fct_credit
     columns:
       - name: pk
-        tests:
+        data_tests:
           - unique
           - not_null
   - name: fct_referral
     columns:
       - name: id_tracking_order
-        tests:
+        data_tests:
           - unique
           - not_null
   - name: fct_referrer
     columns:
       - name: referrer_id
-        tests:
+        data_tests:
           - unique
           - not_null
