@@ -3,6 +3,8 @@
 import os
 import dlogging
 from demail.gmail import SendEmail
+# import importlib
+import json
 
 
 package_name = ''
@@ -11,6 +13,18 @@ logger.info('Beginning package')
 
 
 try:
+
+    filepath = os.path.join('git_repo', 'target', 'run_results.json')
+    with open(filepath, 'r') as f:
+        js = f.read()
+    js = json.loads(js)
+
+    error_list = ''
+    for x in js['results']:
+        if x['status'] == 'error':
+            error_list += x['unique_id'] + ' - ' + x['message'] + '\n\n'
+    if error_list != '':
+        raise Exception(error_list)
 
     import post_credits
 
