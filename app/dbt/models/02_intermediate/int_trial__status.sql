@@ -5,27 +5,39 @@ with subscription_item as (
     qualify row_number() over (partition by si.subscription_id order by si.created desc) = 1
 )
 
+{% if target.schema == 'referral_system' %}
+    , dim_product as (
+        select p.product
+            , p.sub_category
+        from analytics.dim_products p
+        where p.mastermind_subscription_type = 'subscription'
+    )
+{% else %}
+    , dim_product as (
+        select p.product
+            , p.sub_category
+        from {{ this.schema }}.dim_products p
+    )
+{% endif %}
+
 , all_subscriptions as (
     select sh.id as subscription_id_mm
         , sh.created
         , coalesce(sh.cancel_at, sh.canceled_at) as cancel_date
         , coalesce(sh.cancel_at, sh.canceled_at, cast('9000-12-31' as timestamp)) as ref_date
+        , sh.customer_id
         , analytics.fnEmail(cs.email) as email
         , {{ dbt_utils.generate_surrogate_key(['analytics.fnEmail(cs.email)', 'cast(sh.created as date)']) }} as uq_email_created
-        , coalesce(p.sub_category, '97 membership') as sub_category
+        , si.plan_id as product
+        , p.sub_category
     from {{ source('stripe_mastermind', 'subscription_history') }} sh
         join subscription_item si
             on sh.id = si.subscription_id
         LEFT JOIN {{ source('stripe_mastermind', 'customer') }} cs
             ON sh.customer_id = cs.id
-        left join analytics.dim_products p
+        join dim_product p
             on si.plan_id = p.product
-            and p.mastermind_subscription_type = 'subscription'
     where lower(sh.metadata) like '%referral%'
-        and (
-            p.product is not null
-            or '{{ env_var("RUN_MODE", "prod") }}' = 'test'
-        )
 )
 
 , new_subscription as (
@@ -56,8 +68,10 @@ with subscription_item as (
 )
 
 select t.*
+    , p.customer_id
     , p.subscription_id_mm
     , p.created as created_date_mm
+    , p.product
     , p.sub_category
     , g.first_paid
     , case when s.id_tracking_order is null and g.id_tracking_order is not null then 1 else 0 end as is_good_referral
