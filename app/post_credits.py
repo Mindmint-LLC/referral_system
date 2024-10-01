@@ -2,6 +2,7 @@
 
 import os
 import requests
+import pandas as pd
 from dbharbor.bigquery import SQL
 import dbharbor
 import dlogging
@@ -21,25 +22,28 @@ schema = os.getenv("DBT_DATASET")
 
 #%%
 
-# import pandas as pd
-# df = pd.DataFrame({'affiliate_code':['abc', 'def'], 'credits':[100, 300], 'points':[1000, 2000], 'cumulative_points':[5000, 8000]})
-
 logger.info('Pull unapplied credits from Bigquery')
 sql = f'''
-    select pk
-    , referrer_id as affiliate_code
-    , credits
-    , points
-    , points as cumulative_points
-    from `bbg-platform.{schema}.fct_credit`
+    select c.pk
+    , c.referrer_id as affiliate_code
+    , c.credits
+    , c.points
+    , c.points_agg_new as cumulative_points
+    from `bbg-platform.{schema}.fct_mm_api_summary` c
+    left join `bbg-platform.{schema}.fct_mm_api_summary_applied` a
+        on c.pk = a.pk
+    where a.pk is null;
 '''
 df = con.read(sql)
 
 
+#%%
+
 if not df.empty:
     payload = {}
-    df_payload = df[['affiliate_code', 'credits', 'points', 'cumulative_points']].copy()
-    payload['payload'] = df_payload.to_json(orient='records')
+    df_payload = df.groupby('affiliate_code').agg({'credits':'sum', 'points':'sum', 'cumulative_points':'max'}).copy()
+    df_payload.reset_index(inplace=True)
+    payload['payload'] = df_payload.to_dict(orient='records')
     logger.info(f'Post credits:\n{payload}')
 
     response = requests.post(url, auth=(username, password), json=payload)
@@ -47,11 +51,11 @@ if not df.empty:
         logger.info('Credits successfully applied, updating applied table in Bigquery')
         df_applied = df[['pk']].copy()
         df_applied = dbharbor.clean(df_applied, rowloadtime=True)
-        con.to_sql(df_applied, f'`bbg-platform.{schema}.fct_credit_applied`', index=False, if_exists='append')
+        con.to_sql(df_applied, f'{schema}.fct_mm_api_summary_applied', index=False, if_exists='append')
         logger.info('Applied table successfully updated')
     else:
         logger.error('Error during credit post')
-        raise(f'{response.status_code}\n{response.text}')
+        raise Exception(f'{response.status_code}\n{response.text}')
 else:
     logger.info('No credits to apply')
 
