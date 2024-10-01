@@ -3,7 +3,6 @@
 import os
 import dlogging
 from demail.gmail import SendEmail
-# import importlib
 import json
 
 
@@ -34,10 +33,12 @@ try:
 except Exception as e:
     e = str(e)
     logger.critical(f'{e}\n', exc_info=True)
-    SendEmail(to_email_addresses=os.getenv('EMAIL_FAIL')
+    to_email_addresses=os.getenv('EMAIL_FAIL')
+    SendEmail(to_email_addresses=to_email_addresses
                         , subject=f'Python Error - {package_name}'
                         , body=e
                         , attach_file_address=logger.handlers[0].baseFilename
                         , user=os.getenv('EMAIL_UID')
                         , password=os.getenv('EMAIL_PWD')
                         )
+    logger.info(f'Failure email sent to:\n{to_email_addresses}')
