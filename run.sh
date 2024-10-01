@@ -1,6 +1,6 @@
 #!/bin/bash
 
-git config --global --add safe.directory /volume_referral/.git
+# git config --global --add safe.directory /volume_referral/.git
 git clone -b $GIT_BRANCH --depth 1 $GIT_REPO git_repo
 
 cd git_repo/app/dbt
