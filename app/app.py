@@ -14,7 +14,7 @@ logger.info('Beginning package')
 
 try:
 
-    filepath = os.path.join('git_repo', 'target', 'run_results.json')
+    filepath = '/git_repo/app/dbt/target/run_results.json'
     with open(filepath, 'r') as f:
         js = f.read()
     js = json.loads(js)
