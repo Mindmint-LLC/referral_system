@@ -55,6 +55,7 @@ with subscription_item as (
         join all_subscriptions s
             on t.email = s.email
             and cast(t.dt as date) > date_add(cast(s.ref_date as date), interval -6 month)
+            and cast(t.dt as date) > cast(s.created as date)
 )
 
 , good_payment as (
