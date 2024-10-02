@@ -30,14 +30,14 @@ with subscription_item as (
         , {{ dbt_utils.generate_surrogate_key(['analytics.fnEmail(cs.email)', 'cast(sh.created as date)']) }} as uq_email_created
         , si.plan_id as product
         , p.sub_category
+        , case when p.product is not null and lower(sh.metadata) like '%referral%' then true else false end as is_good_subscription
     from {{ source('stripe_mastermind', 'subscription_history') }} sh
         join subscription_item si
             on sh.id = si.subscription_id
         LEFT JOIN {{ source('stripe_mastermind', 'customer') }} cs
             ON sh.customer_id = cs.id
-        join dim_product p
+        left join dim_product p
             on si.plan_id = p.product
-    where lower(sh.metadata) like '%referral%'
 )
 
 , new_subscription as (
@@ -45,6 +45,7 @@ with subscription_item as (
     from {{ ref('int_trial') }} t
         join all_subscriptions s
             on t.uq_email_created = s.uq_email_created
+            and s.is_good_subscription = true
     qualify row_number() over (partition by t.id_tracking_order order by s.ref_date desc, s.created desc) = 1
 )
 
