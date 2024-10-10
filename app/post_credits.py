@@ -26,7 +26,7 @@ logger.info('Pull unapplied credits from Bigquery')
 sql = f'''
     select c.pk
     , c.referrer_id as affiliate_code
-    , c.credits
+    , c.credits * 100 as credits
     , c.points
     , c.points_agg_new as cumulative_points
     from `bbg-platform.{schema}.fct_mm_api_summary` c
