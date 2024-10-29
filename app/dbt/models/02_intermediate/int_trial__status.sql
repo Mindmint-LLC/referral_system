@@ -30,7 +30,8 @@ with subscription_item as (
         , {{ dbt_utils.generate_surrogate_key(['analytics.fnEmail(cs.email)', 'cast(sh.created as date)']) }} as uq_email_created
         , si.plan_id as product
         , p.sub_category
-        , case when p.product is not null and lower(sh.metadata) like '%referral%' then true else false end as is_good_subscription
+        , case when p.product is not null then true else false end as is_good_subscription
+        {# , case when p.product is not null and lower(sh.metadata) like '%referral%' then true else false end as is_good_subscription #}
     from {{ source('stripe_mastermind', 'subscription_history') }} sh
         join subscription_item si
             on sh.id = si.subscription_id
