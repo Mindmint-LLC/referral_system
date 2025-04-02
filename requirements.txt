@@ -2,3 +2,4 @@ dbharbor==0.1.7
 dbt-bigquery==1.8.2
 demail @ git+https://github.com/edire/demail.git@7e614361f729f5f44b7e461e2cb77f1ed0806faa
 dlogging @ git+https://github.com/edire/dlogging.git@12c73a61a71ebde99c8e078df3a663ca78fb116a
+prefect==3.2.1
